@@ -19,13 +19,24 @@ const config = {
     },
     logging: {
         level: 'info',
-        file: 'pagespeed-audit.log',
+        file: 'output/pagespeed-audit.log',
         console: true
     },
     checkpoint: {
         enabled: true,
-        file: 'checkpoint.json',
+        file: 'output/checkpoint.json',
         interval: 5 // Save checkpoint every N URLs
+    },
+    output: {
+        directory: 'output',
+        excel: {
+            prefix: 'pagespeed_',
+            suffix: '_report'
+        },
+        summary: {
+            prefix: 'summary_',
+            suffix: '_report'
+        }
     },
     thresholds: {
         good: {
@@ -194,8 +205,20 @@ function getDateString() {
     return `${year}${month}${day}`
 }
 
+// Ensure output directory exists
+function ensureOutputDirectory() {
+    if (!fs.existsSync(config.output.directory)) {
+        fs.mkdirSync(config.output.directory, { recursive: true });
+        logger.info(`Created output directory: ${config.output.directory}`);
+    }
+}
+
 function exportData(data) {
     const domain = (new URL(data[0][0].URL)).hostname.replace('www.','');
+    const dateStr = getDateString();
+    const filename = `${config.output.excel.prefix}${domain}${config.output.excel.suffix}_${dateStr}.xlsx`;
+    const filepath = path.join(config.output.directory, filename);
+
     var wb = new xl.Workbook();
     var ws = wb.addWorksheet(domain);
     const header = wb.createStyle({
@@ -425,8 +448,8 @@ function exportData(data) {
             ws.cell((i+3), 20).number(row[0].Desktop[0].SEO).style(poor)
         }
     }
-    wb.write(`${domain}_${getDateString()}.xlsx`);
-    console.log(`Process Completed!`)
+    wb.write(filepath);
+    logger.info(`Excel report saved to: ${filepath}`);
 }
 
 function validateApiResponse(data, url) {
@@ -675,6 +698,7 @@ function printSummary(summary) {
 // Update the start function
 async function start() {
     try {
+        ensureOutputDirectory();
         logger.info('Starting performance analysis...');
         const urls = await getURLs(config.siteMap);
         const results = [];
@@ -709,7 +733,11 @@ async function start() {
         printSummary(summary);
 
         // Export summary to file
-        const summaryFile = `summary_${getDateString()}.json`;
+        const domain = (new URL(results[0][0].URL)).hostname.replace('www.','');
+        const summaryFile = path.join(
+            config.output.directory,
+            `${config.output.summary.prefix}${domain}${config.output.summary.suffix}_${getDateString()}.json`
+        );
         fs.writeFileSync(summaryFile, JSON.stringify(summary, null, 2));
         logger.info(`Summary exported to ${summaryFile}`);
 
