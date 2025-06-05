@@ -10,7 +10,7 @@ import chalk from 'chalk'
 // Configuration
 const config = {
     siteMap: 'https://www.matthitch.com/sitemap_index.xml',
-    API_KEY: 'AIzaSyCNUgaK73q5NeeewCsUVOdFyJGwJ6Pyl5c',
+    API_KEY: process.env.API_KEY,
     maxRetries: 3,
     retryDelay: 1000, // ms
     rateLimit: {
