@@ -6,11 +6,13 @@ import path from 'path'
 import { createLogger, format, transports } from 'winston'
 import ora from 'ora'
 import chalk from 'chalk'
+import dotenv from 'dotenv'
+dotenv.config()
 
 // Configuration
 const config = {
     siteMap: 'https://www.matthitch.com/sitemap_index.xml',
-    API_KEY: process.env.API_KEY,
+    API_KEY: process.env.PAGESPEED_API_KEY,
     maxRetries: 3,
     retryDelay: 1000, // ms
     rateLimit: {
